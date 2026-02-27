@@ -75,3 +75,581 @@ df.describe
 print(df.iloc[0])
 print(df.iloc[1:4])
 print(df.iloc[:4])
+
+
+
+
+
+##Feature Scaling and Dummification
+## Apply feature-scaling techniques like standardization and normalization to numerical features.
+
+
+#Resclaing a feature
+import numpy as np
+import pandas as pd
+from sklearn import preprocessing
+scaler = preprocessing. StandardScaler()
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+feature = df['f1']
+feature = feature.values.reshape(-1, 1)
+minmax_scaler = preprocessing.MinMaxScaler(feature_range=(0,1))
+scaled_feature = minmax_scaler.fit_transform(feature)
+scaled_feature
+
+#Standardizing a Feature
+feature =np.array(feature).reshape(-1, 1)
+standardized = scaler.fit_transform(feature)
+print("Mean {}".format(round (standardized.mean())))
+print("Standard deviation: {}".format(standardized.std()))
+robust_scaler = preprocessing.RobustScaler()
+robust_scaler.fit_transform(feature)
+transformed_feature = robust_scaler.transform(feature)
+sliced_array = transformed_feature[:5]
+print(sliced_array)
+
+##Normalizing Observation
+from sklearn.preprocessing import Normalizer
+feature = df['hp']
+feature = np.array(feature).reshape(-1, 1)
+normalizer_l1 = Normalizer(norm="l1")
+normalizer_l2 = Normalizer(norm="l2")
+normalizer_max = Normalizer(norm="max")
+normalized_l1 = normalizer_l1.transform(feature)
+normalized_l2 = normalizer_l2.transform(feature)
+normalized_max = normalizer_max.transform(feature)
+print("l1 normalization\n", normalized_l1[:5])
+print("\nl2 normalization\n", normalized_l2[:5])
+print("\nmax normalization\n", normalized_max[:5])
+
+#Grouping Observation Using Clustering
+from sklearn.cluster import KMeans
+feature = df['hp']
+feature = np.array(feature).reshape(-1, 1)
+df_features = pd.DataFrame(feature, columns=["hp"])
+clusterer = KMeans(n_clusters=3, random_state=0)
+clusterer.fit(feature)
+df_features["group"] = clusterer.labels_
+print(df_features.head())
+
+#Deleting Observation with Missing Values
+feature_cleaned = feature[~np.isnan(feature).any(axis=1)]
+portion_of_feature = feature_cleaned[:10]
+print(portion_of_feature)
+
+#Imputing Missing Values
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+mean_imputer = SimpleImputer(strategy="mean")
+median_imputer = SimpleImputer(strategy="median")
+mode_imputer = SimpleImputer(strategy="most_frequent")
+feature_mean_imputed = mean_imputer.fit_transform(feature)
+feature_median_imputed = median_imputer.fit_transform(feature)
+feature_mode_imputed = mode_imputer.fit_transform(feature)
+print("Mean Imputed Value: {}".format(feature_mean_imputed[0, 0]))
+print("Median Imputed Value: {}".format(feature_median_imputed[0, 0]))
+print("Mode Imputed Value: {}".format(feature_mode_imputed[0, 0]))
+
+
+##Perform feature dummification to convert categorical variables into numerical representations.
+
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
+df=pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+print(df.head())
+
+one_hot = LabelBinarizer()
+one_hot.fit_transform(df['fuel'])
+print(one_hot.classes_)
+
+df1 = pd.get_dummies(df,columns=['make', 'fuel', 'gear', 'offerType'],drop_first=True)
+print(df1.head())
+
+data = df['fuel'].apply(lambda x: [x])
+one_hot_multiclass = MultiLabelBinarizer()
+one_hot_multiclass.fit_transform(data)
+
+scale_mapper = {
+    "Diesel": 1,
+    "Gasoline": 2}
+print(df["fuel"].replace(scale_mapper).head())
+
+from sklearn.feature_extraction import DictVectorizer
+dictvectorizer = DictVectorizer(sparse=False)
+df3 = df.to_dict(orient='records')
+features = dictvectorizer.fit_transform(df3)
+print(dictvectorizer.get_feature_names_out())
+
+df4 = df.copy()
+nan_mask = np.random.rand(*df4.shape) < 0.05
+df4 = df4.mask(nan_mask)
+from sklearn.impute import SimpleImputer
+X_complete = np.vstack((df4.values, df4.values))
+imputer = SimpleImputer(strategy="most_frequent")
+imputer.fit_transform(X_complete)
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+df_encoded = df.apply(LabelEncoder().fit_transform)
+X = df_encoded.drop("gear", axis=1)
+y = df_encoded["gear"]
+target = np.where(y == 0, 0, 1)
+RandomForestClassifier(class_weight="balanced")
+
+i_class0 = np.where(y == 0)[0]
+i_class1 = np.where(y == 1)[0]
+n_class0 = len(i_class0)
+n_class1 = len(i_class1)
+i_class1_downsampled = np.random.choice(i_class1, size=n_class0, replace=False)
+X_down = np.vstack((X.iloc[i_class0], X.iloc[i_class1_downsampled]))
+y_down = np.hstack((y.iloc[i_class0], y.iloc[i_class1_downsampled]))
+print("After downsampling:", np.bincount(y_down))
+
+i_class0_upsampled = np.random.choice(i_class0, size=n_class1, replace=True)
+X_up = np.vstack((X.iloc[i_class0_upsampled], X.iloc[i_class1]))
+y_up = np.hstack((y.iloc[i_class0_upsampled], y.iloc[i_class1]))
+print("After upsampling:", np.bincount(y_up))
+
+
+
+
+
+##Hypothesis Testing
+## Formulate null and alternative hypotheses for a given problem.
+## Conduct a hypothesis test using appropriate statistical tests (e.g., t-test, chi-square test).
+## Interpret the results and draw conclusions based on the test outcomes.
+
+
+#t-test
+import pandas as pd
+import numpy as np
+import scipy.stats as stats
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+print(df.head())
+print(df.columns)
+data = df["mileage"].dropna().values
+print("model:", data)
+
+H0 = "The hp is less than 125."
+H1 = "The hp is more than 125."
+print("Null Hypothesis:", H0)
+print("Alternative Hypothesis:", H1)
+
+t_stat, p_value_two_tailed = stats.ttest_1samp(data, 125)
+print("T-Statistic:", t_stat)
+print("P-Value (Two-Tailed):", p_value_two_tailed)
+
+p_value = p_value_two_tailed / 2
+print("T-Statistic:", t_stat)
+print("Two-Tailed P-Value:", p_value_two_tailed)
+print("One-Tailed P-Value:", p_value)
+
+print("Test statistic:", t_stat)
+print("One-tailed p-value:", p_value)
+
+if t_stat > 0 and p_value < 0.05:
+    print("Reject the null hypothesis.")
+else:
+    print("Fail to reject the null hypothesis.")
+
+
+#Two sampled T-test
+from scipy.stats import ttest_ind
+import pandas as pd
+import numpy as np
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+print(df['fuel'].unique())
+
+group1 = df[df["fuel"] == "Diesel"]["price"].dropna().values   # Diesel
+group2 = df[df["fuel"] == "Gasoline"]["price"].dropna().values   # Gasoline
+print("Group 1 data (Diesel):")
+print(group1)
+print("Group 2 data (Gasoline):")
+print(group2)
+
+group1_mean = np.mean(group1)
+group2_mean = np.mean(group2)
+print("Group 1 mean value:", group1_mean)
+print("Group 2 mean value:", group2_mean)
+
+group1_std = np.std(group1)
+group2_std = np.std(group2)
+print("group1 std value:", group1_std)
+print("group2 std value:", group2_std)
+
+ttest, pval = ttest_ind(group1, group2, equal_var=False)
+print("p-value:", pval)
+
+if pval < 0.05:
+    print("we reject null hypothesis")
+else:
+    print("we accept null hypothesis")
+
+
+#Paired sampled t-test
+import pandas as pd
+from scipy import stats
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+print(df[['price', 'hp']].describe())
+ttest, pval = stats.ttest_rel(df['price'], df['hp'], nan_policy='omit')
+print("p-value:", pval)
+if pval < 0.05:
+    print("reject null hypothesis")
+else:
+    print("accept null hypothesis")
+
+
+#Z-test
+import pandas as pd
+from scipy import stats
+from statsmodels.stats import weightstats as stests
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+ztest, pval = stests.ztest(df['price'].dropna(),
+                           x2=None,
+                           value=32)
+print("p-value:", float(pval))
+if pval < 0.05:
+    print("Reject null hypothesis")
+else:
+    print("Fail to reject null hypothesis")
+
+
+#two sampled Z-test
+import pandas as pd
+from statsmodels.stats import weightstats as stests
+df = pd.read_csv("Covid Data.csv")
+ztest, pval1 = stests.ztest(df['price'].dropna(),
+                            x2=df['hp'].dropna(),
+                            value=0,
+                            alternative='two-sided')
+print(float(pval1))
+if pval1 < 0.05:
+    print("reject null hypothesis")
+else:
+    print("accept null hypothesis")
+
+
+#chi-square test
+import pandas as pd
+from scipy.stats import chi2_contingency
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+contingency_table = pd.crosstab(df['hp'], df['price'])
+chi2_statistic, p_value, dof, expected_frequencies = chi2_contingency(contingency_table)
+print('Chi-square statistic:', chi2_statistic)
+print('P-value:', p_value)
+print('Degrees of freedom:', dof)
+print('Expected frequencies:')
+print(expected_frequencies)
+
+
+
+
+
+##ANOVA (Analysis of Variance)
+## Perform one-way ANOVA to compare means across multiple groups.
+## Conduct post-hoc tests to identify significant differences between group means.
+
+
+#F-TEST
+import pandas as pd
+import numpy as np
+import scipy.stats as stats
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+df_anova = df[['price', 'hp']]
+print(df_anova.head())
+grps = pd.unique(df_anova.price.values)
+d_data = {grp: df_anova['hp'][df_anova.price == grp].dropna()
+          for grp in grps}
+if len(d_data) >= 2:
+    F, p = stats.f_oneway(*d_data.values())
+else:
+    raise ValueError("Dataset does not have at least 2 groups for ANOVA.")
+print("p-value for significance is: ", p)
+if p < 0.05:
+    print("reject null hypothesis")
+else:
+    print("accept null hypothesis")
+
+
+#Two Way F-test
+import pandas as pd
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+df = pd.read_csv("/content/Covid Data.csv")
+df_anova2 = df[['hp', 'price', 'mileage']].dropna()
+model = ols('hp ~ C(price) * C(mileage)', data=df_anova2).fit()
+print(f"Overall model F({model.df_model:.0f},{model.df_resid:.0f}) = "
+      f"{model.fvalue:.3f}, p = {model.f_pvalue:.4f}")
+res = sm.stats.anova_lm(model, typ=2)
+print(res)
+
+
+
+
+
+##Regression and Its Types
+## Implement simple linear regression using a dataset.
+## Explore and interpret the regression model coefficients and goodness-of-fit measures.
+## Extend the analysis to multiple linear regression and assess the impact of additional predictors.
+
+
+#Simple Linear Regression
+
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+temp_df = df[['hp', 'price']].copy()
+temp_df['price'] = temp_df['price'].replace(99, np.nan)
+temp_df.dropna(inplace=True)
+X = temp_df[['hp']]  # Independent variable
+y = temp_df['price']  # Dependent variable
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+regressor = LinearRegression()
+regressor.fit(X_train, y_train)
+y_pred_train = regressor.predict(X_train)
+y_pred_test = regressor.predict(X_test)
+
+print("Training predictions:\n", y_pred_train)
+print("\nTest predictions:\n", y_pred_test)
+print(f"\nCoefficient: {regressor.coef_}")
+print(f"Intercept: {regressor.intercept_}")
+
+
+#Multiple Linear Regression
+
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+df_mlr = df[['price', 'hp', 'year']].copy()
+df_mlr.dropna(subset=['price', 'hp', 'year'], inplace=True)
+X = df_mlr[['hp', 'year']]  # independent variables
+y = df_mlr['price']          # dependent variable
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+regressor = LinearRegression()
+regressor.fit(X_train, y_train)
+
+y_pred_train = regressor.predict(X_train)
+y_pred_test = regressor.predict(X_test)
+
+np.set_printoptions(precision=2)
+result = np.concatenate((
+    y_pred_test.reshape(len(y_pred_test), 1),
+    y_test.values.reshape(len(y_test), 1)
+), axis=1)
+
+print("Predicted vs Actual (Test Set):\n", result)
+print(f"\nCoefficient: {regressor.coef_}")
+print(f"Intercept: {regressor.intercept_}")
+
+
+
+
+
+##K-Means Clustering
+## Apply the K-Means algorithm to group similar data points into clusters.
+## Determine the optimal number of clusters using elbow method or silhouette analysis.
+## Visualize the clustering results and analyze the cluster characteristics.
+
+
+import pandas as pd
+import numpy as np
+from sklearn.cluster import KMeans
+from scipy.spatial.distance import cdist
+
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+print("Dataset shape:", df.shape)
+print("Columns:", df.columns)
+df['make'] = df['make'].astype('category').cat.codes
+X = df.drop('id', axis=1)
+x = X[['price', 'hp']].dropna()
+kmeans = KMeans(n_clusters=5, random_state=42, n_init=10)
+kmeans.fit(x)
+y_kmeans = kmeans.predict(x)
+centers = kmeans.cluster_centers_
+print("\nCluster Centers (5 clusters):")
+print(centers)
+
+wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, random_state=42)
+    kmeans.fit(x)
+    wcss.append(kmeans.inertia_)
+print("\nWCSS for 1-10 clusters:", wcss)
+
+X_final = x[['price', 'hp']]
+kmeans = KMeans(n_clusters=4, random_state=42)
+y_kmeans_final = kmeans.fit_predict(X_final)
+centers_final = kmeans.cluster_centers_
+print("\nCluster Centers (4 clusters):")
+print(centers_final)
+
+p1 = X_final.iloc[0].values
+p2 = X_final.iloc[1].values
+euclidean_distance = np.sqrt(np.sum((p1 - p2) ** 2))
+print("\nEuclidean Distance between first two points:", euclidean_distance)
+
+euclidean_distances = []
+for i in range(len(X_final)):
+    centroid = centers_final[y_kmeans_final[i]]
+    distance = np.linalg.norm(X_final.iloc[i].values - centroid)
+    euclidean_distances.append(distance)
+print("\nEuclidean distances from points to their centroids (first 10):", euclidean_distances[:10])
+
+clusters = np.unique(y_kmeans_final)
+intra_distances = []
+for cluster in clusters:
+    cluster_points = X_final.values[y_kmeans_final == cluster]
+    if len(cluster_points) > 1:
+        distances = cdist(cluster_points, cluster_points, metric='euclidean')
+        intra_distances.append(distances.max())
+    else:
+        intra_distances.append(0)
+max_intra = np.max(intra_distances)
+min_inter = np.inf
+for i in range(len(clusters)):
+    for j in range(i + 1, len(clusters)):
+        points_i = X_final.values[y_kmeans_final == clusters[i]]
+        points_j = X_final.values[y_kmeans_final == clusters[j]]
+        distances = cdist(points_i, points_j, metric='euclidean')
+        min_inter = min(min_inter, distances.min())
+dunn_index = min_inter / max_intra
+print("\nDunn Index:", dunn_index)
+
+
+
+
+
+##Principal Component Analysis (PCA)
+## Perform PCA on a dataset to reduce dimensionality.
+## Evaluate the explained variance and select the appropriate number of principal components.
+## Visualize the data in the reduced-dimensional space.
+
+
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+import numpy as np
+
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+print(df.head())
+
+df_numeric = df.select_dtypes(include=np.number)
+df_numeric_cleaned = df_numeric.dropna()
+X = StandardScaler().fit_transform(df_numeric_cleaned)
+pca = PCA(n_components=0.99, whiten=True)
+X_pcs = pca.fit_transform(X)
+print('Original number of features:', X.shape[1])
+print('Reduced number of features:', X_pcs.shape[1])
+
+
+from sklearn.decomposition import PCA, KernelPCA
+from sklearn.datasets import make_circles
+X, _ = make_circles(n_samples=1000, random_state=1, noise=0.1, factor=0.1)
+kpca = KernelPCA(kernel="rbf", gamma=15, n_components=1)
+X_kpca = kpca.fit_transform(X)
+print('Original number of features:', X.shape[1])
+print('Reduced number of features:', X_kpca.shape[1])
+
+
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+X = df.drop('price', axis=1)
+y = df['price']
+X_processed = X.copy()
+y_processed = y.copy()
+if 'year' in X_processed.columns:
+    X_processed = X_processed.drop('year', axis=1)
+X_processed = X_processed.select_dtypes(include=np.number)
+combined_data_clean = pd.concat([X_processed, y_processed], axis=1).dropna()
+target_col_name = 'price'
+if target_col_name in combined_data_clean.columns:
+    X_lda_input = combined_data_clean.drop(target_col_name, axis=1)
+    y_lda_input = combined_data_clean[target_col_name]
+    y_lda_input = y_lda_input.astype(int)
+    lda = LinearDiscriminantAnalysis(n_components=1)
+    X_lda = lda.fit_transform(X_lda_input, y_lda_input)
+else:
+    print(f"Error: Target column '{target_col_name}' not found after cleaning. Check original 'y' or column name.")
+print('Original number of features:', X.shape[1])
+print('Reduced number of features:', X_lda.shape[1])
+print(lda.explained_variance_ratio_)
+
+
+
+
+
+##Data Visualization and Storytelling
+## Create meaningful visualizations using data visualization tools
+## Combine multiple visualizations to tell a compelling data story.
+## Present the findings and insights in a clear and concise manner.
+
+
+import pandas as pd
+import numpy as np
+import warnings
+warnings.filterwarnings("ignore")
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+
+print("\nDataset Shape:")
+print(df.shape)
+print("\nColumns:")
+print(df.columns.tolist())
+print("\nMissing Values per Column:")
+print(df.isnull().sum())
+print("\nData Types:")
+print(df.dtypes)
+
+numeric_cols = df.select_dtypes(include=np.number).columns
+if len(numeric_cols) > 0:
+    print("\nNumerical Feature Summary:")
+    print(df[numeric_cols].describe())
+else:
+    print("\nNo numerical columns found.")
+
+categorical_cols = df.select_dtypes(exclude=np.number).columns
+if len(categorical_cols) > 0:
+    print("\nCategorical Feature Summary:")
+    for col in categorical_cols:
+        print(f"\nValue counts for '{col}':")
+        print(df[col].value_counts().head())
+else:
+    print("\nNo categorical columns found.")
+
+if len(numeric_cols) > 1:
+    print("\nCorrelation Matrix (Numeric Features):")
+    print(df[numeric_cols].corr())
+else:
+    print("\nNot enough numeric features for correlation.")
+
+binary_candidates = []
+for col in df.columns:
+    if df[col].nunique() == 2:
+        binary_candidates.append(col)
+if len(binary_candidates) > 0:
+    target = binary_candidates[0]
+    print(f"\nDetected Possible Target Column: {target}")
+    print("Class Distribution:")
+    print(df[target].value_counts(normalize=True))
+else:
+    print("\nNo obvious binary target column detected.")
+
+if len(numeric_cols) > 0:
+    print("- Dataset contains numerical features suitable for statistical analysis.")
+if len(categorical_cols) > 0:
+    print("- Dataset contains categorical features that may require encoding for ML.")
+if df.isnull().sum().sum() > 0:
+    print("- Dataset contains missing values. Consider imputation or removal.")
+if len(numeric_cols) > 1:
+    print("- Correlation analysis can help identify strongly related features.")
+if len(binary_candidates) > 0:
+    print("- Binary target detected. Dataset is suitable for classification tasks.")
