@@ -1,3 +1,15 @@
+##Libraries install
+
+import subprocess
+import sys
+libraries = ["pandas", "numpy", "scikit-learn", "scipy", "statsmodels"]
+for lib in libraries:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", lib])
+print("All libraries installed successfully!")
+
+
+
+
 ###Data Frames and Basic Data Pre-processing
 ### Read data from CSV and JSON files into a data frame.
 
