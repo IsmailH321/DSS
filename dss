@@ -10,6 +10,53 @@ print("All libraries installed successfully!")
 
 
 
+##Introduction to Excel
+## Perform conditional formatting on a dataset using various criteria.
+
+
+Open the dataset in Excel.
+Select the Profit column.
+Click the Home tab in the top menu.
+Click Conditional Formatting.
+Select Highlight Cells Rules.
+Click Greater Than.
+Enter the value 800.
+Choose a color (for example green or red).
+Click OK.
+
+## Create a pivot table to analyze and summarize data.
+
+
+Select the entire dataset including headers.
+Click the Insert tab.
+Click PivotTable.
+Choose New Worksheet.
+Click OK.
+In the PivotTable fields:
+Drag Category → Rows
+Drag Sales → Values
+Excel will automatically calculate Sum of Sales for each category.
+
+## Use VLOOKUP function to retrieve information from a different worksheet or table.
+
+
+Go to the cell where you want the result.
+Type the formula: =VLOOKUP(Sheet1!B3,Sheet1!B:D,3,FALSE)
+Press Enter.
+
+## Perform what-if analysis using Goal Seek to determine input values for desired output.
+
+
+Make sure you have a formula in the result cell the cell in which to perform what if. (eg. TotalPrice = Quantity * UnitPrice)
+Click the Data tab in Excel.
+Click What-If Analysis.
+Click Goal Seek.
+A small window will open.You will see 3 fields.
+Fill the fields and click Enter
+
+
+
+
 ###Data Frames and Basic Data Pre-processing
 ### Read data from CSV and JSON files into a data frame.
 
