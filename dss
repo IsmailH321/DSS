@@ -589,6 +589,83 @@ print("\nDunn Index:", dunn_index)
 
 
 
+## WITH VISUALIZATION
+import pandas as pd
+import numpy as np
+from sklearn.cluster import KMeans
+from scipy.spatial.distance import cdist
+import matplotlib.pyplot as plt
+
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+print("Dataset shape:", df.shape)
+print("Columns:", df.columns)
+
+df['make'] = df['make'].astype('category').cat.codes
+X = df.drop('id', axis=1)
+x = X[['price', 'hp']].dropna()
+kmeans = KMeans(n_clusters=5, random_state=42, n_init=10)
+kmeans.fit(x)
+y_kmeans = kmeans.predict(x)
+centers = kmeans.cluster_centers_
+print("\nCluster Centers (5 clusters):")
+print(centers)
+
+wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, random_state=42)
+    kmeans.fit(x)
+    wcss.append(kmeans.inertia_)
+print("\nWCSS for 1-10 clusters:", wcss)
+
+X_final = x[['price', 'hp']]
+kmeans = KMeans(n_clusters=4, random_state=42)
+y_kmeans_final = kmeans.fit_predict(X_final)
+centers_final = kmeans.cluster_centers_
+print("\nCluster Centers (4 clusters):")
+print(centers_final)
+
+p1 = X_final.iloc[0].values
+p2 = X_final.iloc[1].values
+euclidean_distance = np.sqrt(np.sum((p1 - p2) ** 2))
+print("\nEuclidean Distance between first two points:", euclidean_distance)
+
+euclidean_distances = []
+for i in range(len(X_final)):
+    centroid = centers_final[y_kmeans_final[i]]
+    distance = np.linalg.norm(X_final.iloc[i].values - centroid)
+    euclidean_distances.append(distance)
+print("\nEuclidean distances from points to their centroids (first 10):", euclidean_distances[:10])
+
+clusters = np.unique(y_kmeans_final)
+intra_distances = []
+for cluster in clusters:
+    cluster_points = X_final.values[y_kmeans_final == cluster]
+    if len(cluster_points) > 1:
+        distances = cdist(cluster_points, cluster_points, metric='euclidean')
+        intra_distances.append(distances.max())
+    else:
+        intra_distances.append(0)
+max_intra = np.max(intra_distances)
+min_inter = np.inf
+for i in range(len(clusters)):
+    for j in range(i + 1, len(clusters)):
+        points_i = X_final.values[y_kmeans_final == clusters[i]]
+        points_j = X_final.values[y_kmeans_final == clusters[j]]
+        distances = cdist(points_i, points_j, metric='euclidean')
+        min_inter = min(min_inter, distances.min())
+dunn_index = min_inter / max_intra
+print("\nDunn Index:", dunn_index)
+
+plt.scatter(X_final['price'], X_final['hp'])
+plt.xlabel("Price")
+plt.ylabel("Horsepower (HP)")
+plt.title("Scatter Plot of Car Price vs Horsepower")
+plt.show()
+
+
+
+
+
 ##Principal Component Analysis (PCA)
 ## Perform PCA on a dataset to reduce dimensionality.
 ## Evaluate the explained variance and select the appropriate number of principal components.
@@ -642,6 +719,62 @@ else:
 print('Original number of features:', X.shape[1])
 print('Reduced number of features:', X_lda.shape[1])
 print(lda.explained_variance_ratio_)
+
+
+
+
+
+## WITH VISUALIZATION
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA, KernelPCA
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_circles
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
+df = pd.read_csv(r"C:\Users\DELL\Desktop\autoscout24-germany-dataset.csv.csv")
+print(df.head())
+df_numeric = df.select_dtypes(include=np.number)
+df_numeric_cleaned = df_numeric.dropna()
+X = StandardScaler().fit_transform(df_numeric_cleaned)
+pca = PCA(n_components=0.99, whiten=True)
+X_pcs = pca.fit_transform(X)
+print('Original number of features:', X.shape[1])
+print('Reduced number of features:', X_pcs.shape[1])
+
+plt.scatter(X_pcs[:, 0], X_pcs[:, 1])
+plt.xlabel("Principal Component 1")
+plt.ylabel("Principal Component 2")
+plt.title("PCA Visualization")
+plt.show()
+
+X_circle, _ = make_circles(n_samples=1000, random_state=1, noise=0.1, factor=0.1)
+kpca = KernelPCA(kernel="rbf", gamma=15, n_components=1)
+X_kpca = kpca.fit_transform(X_circle)
+print('Original number of features:', X_circle.shape[1])
+print('Reduced number of features:', X_kpca.shape[1])
+
+X = df.drop('price', axis=1)
+y = df['price']
+X_processed = X.copy()
+y_processed = y.copy()
+if 'year' in X_processed.columns:
+    X_processed = X_processed.drop('year', axis=1)
+X_processed = X_processed.select_dtypes(include=np.number)
+combined_data_clean = pd.concat([X_processed, y_processed], axis=1).dropna()
+target_col_name = 'price'
+if target_col_name in combined_data_clean.columns:
+    X_lda_input = combined_data_clean.drop(target_col_name, axis=1)
+    y_lda_input = combined_data_clean[target_col_name]
+    y_lda_input = y_lda_input.astype(int)
+    lda = LinearDiscriminantAnalysis(n_components=1)
+    X_lda = lda.fit_transform(X_lda_input, y_lda_input)
+    print('Original number of features:', X.shape[1])
+    print('Reduced number of features:', X_lda.shape[1])
+    print(lda.explained_variance_ratio_)
+else:
+    print(f"Error: Target column '{target_col_name}' not found after cleaning.")
 
 
 
